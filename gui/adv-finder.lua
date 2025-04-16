@@ -288,8 +288,8 @@ function cz_g_pos(cz_id) --Creation zone center in global coords
 end
 
 function site_g_pos(site) --Site center in global coords (blocks from world origin)
-    local x, y = site.global_min_x*3, site.global_min_y*3
-    x, y = x + (site.global_max_x*3 - x)//2, y + (site.global_max_y*3 - y)//2
+    local x, y = site.global_min_x, site.global_min_y
+    x, y = (x + (site.global_max_x - x)//2)*3+1, (y + (site.global_max_y - y)//2)*3+1
     return {x = x, y = y}
 end
 
