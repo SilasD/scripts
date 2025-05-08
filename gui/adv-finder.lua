@@ -31,7 +31,7 @@ end
 function get_hf_name(hf) --'Native Name "Translated Name", Race'
     local full_name = transName(hf.name, false)
     if full_name == '' then --Improve searchability
-        full_name = 'Anonymous'
+        full_name = 'Unnamed'
     else --Add the translation
         local t_name = transName(hf.name, true)
         if full_name ~= t_name then --Don't repeat
@@ -50,7 +50,7 @@ end
 function get_art_name(ar) --'Native Name "Translated Name", Item'
     local full_name = transName(ar.name, false)
     if full_name == '' then --Improve searchability
-        full_name = 'Anonymous'
+        full_name = 'Unnamed'
     else --Add the translation
         local t_name = transName(ar.name, true)
         if full_name ~= t_name then --Don't repeat
@@ -539,7 +539,7 @@ end
 local function insert_name_text(t, name) --HF or artifact name; Return true if both lines
     local str = transName(name, false)
     if str == '' then
-        table.insert(t, 'Anonymous')
+        table.insert(t, 'Unnamed')
     else --Both native and translation
         table.insert(t, str) --Native
         local t_name = transName(name, true)
