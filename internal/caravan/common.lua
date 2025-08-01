@@ -76,8 +76,14 @@ end
 -- Otherwise, if it's less than or equal to [threshold + 50] * 3, it will round to the nearest multiple of 100
 -- Otherwise, if it's less than or equal to [threshold + 50] * 30, it will round to the nearest multiple of 1000
 -- Otherwise, it will display a guess equal to [threshold + 50] * 30 rounded up to the nearest multiple of 1000.
+local threshold_cached = -1
+local threshold_cached_on_tick = -1
 function obfuscate_value(value)
-    local threshold = get_threshold(get_broker_skill())
+    if threshold_cached_on_tick ~= dfhack.world.ReadCurrentTick() then
+        threshold_cached = get_threshold(get_broker_skill())
+        threshold_cached_on_tick = dfhack.world.ReadCurrentTick()
+    end
+    local threshold = threshold_cached
     if value < threshold then return dfhack.formatInt(value) end
     threshold = threshold + 50
     if value <= threshold then return ('~%s'):format(estimate(value, 5, 10)) end
