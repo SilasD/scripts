@@ -37,6 +37,13 @@ end
 
 local function get_broker_skill()
     local broker = dfhack.units.getUnitByNobleRole('broker')
+    local trade_interface = df.global.game.main_interface.trade
+    if trade_interface.open == true
+        and trade_interface.choosing_merchant == false
+        and trade_interface.fortress_trader ~= nil
+    then
+        broker = trade_interface.fortress_trader
+    end
     if not broker then return 0 end
     for _,skill in ipairs(broker.status.current_soul.skills) do
         if skill.id == df.job_skill.APPRAISAL then
