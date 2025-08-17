@@ -32,6 +32,21 @@ Template for new versions:
 
 ## Fixes
 
+- `immortal-cravings`: prioritize high-value meals, properly split of portions, and don't go eating or drinking on a full stomach
+
+## Misc Improvements
+
+## Removed
+
+# 52.03-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `make-legendary`: ``make-legendary all`` will no longer corrupt souls
+
 ## Misc Improvements
 
 ## Removed
