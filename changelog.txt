@@ -17,6 +17,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `caravan`: the trade dialog now uses the current trader's appraisal skill level instead of the broker's
 
 ## Misc Improvements
 
