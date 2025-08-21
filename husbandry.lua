@@ -5,7 +5,7 @@
 local utils = require 'utils'
 local repeatutil = require("repeat-util")
 
-local verbose = true
+local verbose = false
 ---conditional printing of debug messages
 ---@param message string
 local function debug(message)
