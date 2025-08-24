@@ -25,6 +25,7 @@ Template for new versions:
 ]]]
 
 # Future
+- `ban-cooking`: bans honey added by creatures other than vanilla honey bee
 
 ## New Tools
 
