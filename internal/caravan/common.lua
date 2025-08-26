@@ -15,8 +15,8 @@ SOME_PEN = to_pen{ch=':', fg=COLOR_YELLOW}
 ALL_PEN = to_pen{ch=string.char(251), fg=COLOR_LIGHTGREEN}
 
 function add_words(words, str)
-    for word in str:gmatch("[%w]+") do
-        table.insert(words, word:lower())
+    for word in dfhack.toSearchNormalized(str):gmatch("[%w]+") do
+        table.insert(words, word)
     end
 end
 
