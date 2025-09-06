@@ -27,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `store-owned`: task owned items to be stored in the owner's room furniture
 
 ## New Features
 
