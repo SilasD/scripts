@@ -116,7 +116,7 @@ local function getAppropriateWorkshop(unit, collection)
             end
         end
     end
-    return #closest.jobs < 10 and closest or nil
+    return (closest and #closest.jobs < 10) and closest or nil
 end
 
 local function shearCreature(unit, workshop)
@@ -272,10 +272,10 @@ end
 
 if dfhack_flags.enable then
     if dfhack_flags.enable_state then
-        enabled = true
+        state.enabled = true
         start()
     else
-        enabled = false
+        state.enabled = false
         stop()
     end
     persist_state()

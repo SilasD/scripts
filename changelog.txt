@@ -28,6 +28,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 52.03-r2
+
+## New Tools
 - `autotraining`: new tool to assign citizens to a military squad when they need Martial Training
 - `gui/autotraining`: configuration tool for autotraining
 - `entomb`: allow any unit that has a corpse or body parts to be assigned a tomb zone
@@ -47,6 +59,8 @@ Template for new versions:
 - `confirm`: the pause option now pauses individual confirmation types, allowing multiple different confirmations to be paused independently
 - `immortal-cravings`: prioritize high-value meals, properly split of portions, and don't go eating or drinking on a full stomach
 - `uniform-unstick`: no longer causes units to equip multiples of assigned items
+- `caravan`: in the pedestal item assignment dialog, add new items at the end of the list of displayed items instead of at a random position
+- `caravan`: in the pedestal item assignment dialog, consistently remove items from the list of displayed items
 
 ## Misc Improvements
 - `devel/hello-world`: updated to show off the new Slider widget
