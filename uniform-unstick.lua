@@ -119,6 +119,12 @@ local function remove_item_from_position(squad_position, item_id)
             end
         end
     end
+    for _, special_case in ipairs({"quiver", "backpack", "flask"}) do
+        if squad_position.equipment[special_case] == item_id then
+            squad_position.equipment[special_case] = -1
+            return
+        end
+    end
 end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
@@ -164,7 +170,8 @@ local function process(unit, args)
         -- Include weapons so we can check we have them later
         if inv_item.mode == df.inv_item_role_type.Worn or
             inv_item.mode == df.inv_item_role_type.Weapon or
-            inv_item.mode == df.inv_item_role_type.Strapped
+            inv_item.mode == df.inv_item_role_type.Strapped or
+            inv_item.mode == df.inv_item_role_type.Flask
         then
             worn_items[item.id] = item
             worn_parts[item.id] = inv_item.body_part_id
@@ -179,6 +186,12 @@ local function process(unit, args)
                 -- Include weapon and shield so we can avoid dropping them, or pull them out of container/inventory later
                 uniform_assigned_items[assigned_item_id] = df.item.find(assigned_item_id)
             end
+        end
+    end
+    for _, special_case in ipairs({"quiver", "backpack", "flask"}) do
+        local assigned_item_id = squad_position.equipment[special_case]
+        if assigned_item_id ~= -1 then
+            uniform_assigned_items[assigned_item_id] = df.item.find(assigned_item_id)
         end
     end
 
@@ -215,13 +228,7 @@ local function process(unit, args)
     -- Make the equipment.assigned_items list consistent with what is present in equipment.uniform
     for i=#(squad_position.equipment.assigned_items)-1,0,-1 do
         local assigned_item_id = squad_position.equipment.assigned_items[i]
-        -- Quiver, backpack, and flask are assigned in their own locations rather than in equipment.uniform, and thus need their own checks
-        -- If more separately-assigned items are added in the future, this handling will need to be updated accordingly
-        if uniform_assigned_items[assigned_item_id] == nil and
-            assigned_item_id ~= squad_position.equipment.quiver and
-            assigned_item_id ~= squad_position.equipment.backpack and
-            assigned_item_id ~= squad_position.equipment.flask
-        then
+        if uniform_assigned_items[assigned_item_id] == nil then
             local item = df.item.find(assigned_item_id)
             if item ~= nil then
                 print(unit_name .. " has an improperly assigned item, " .. item_description(item) .. "; removing it")
