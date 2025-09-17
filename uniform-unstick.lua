@@ -62,38 +62,20 @@ local function bodyparts_that_can_wear(unit, item)
     local bodyparts = {}
     local unitparts = dfhack.units.getCasteRaw(unit).body_info.body_parts
 
-    if item._type == df.item_helmst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.HEAD then
-                table.insert(bodyparts, index)
+    for bodypart_flag, item_type in pairs({
+        HEAD       = df.item_helmst,
+        UPPERBODY  = df.item_armorst,
+        GRASP      = df.item_glovesst,
+        LOWERBODY  = df.item_pantsst,
+        STANCE     = df.item_shoesst,
+    }) do
+        if item._type == item_type then
+            for index, part in ipairs(unitparts) do
+                if part.flags[bodypart_flag] then
+                    table.insert(bodyparts, index)
+                end
             end
         end
-    elseif item._type == df.item_armorst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.UPPERBODY then
-                table.insert(bodyparts, index)
-            end
-        end
-    elseif item._type == df.item_glovesst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.GRASP then
-                table.insert(bodyparts, index)
-            end
-        end
-    elseif item._type == df.item_pantsst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.LOWERBODY then
-                table.insert(bodyparts, index)
-            end
-        end
-    elseif item._type == df.item_shoesst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.STANCE then
-                table.insert(bodyparts, index)
-            end
-        end
-    else
-        -- print("Ignoring item type for "..item_description(item) )
     end
 
     return bodyparts
