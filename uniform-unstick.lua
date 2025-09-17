@@ -109,6 +109,7 @@ end
 -- @param squad_position df.squad_position
 -- @param item_id number
 local function remove_item_from_position(squad_position, item_id)
+    utils.erase_sorted(squad_position.equipment.assigned_items, item_id)
     for _, uniform_slot_specs in ipairs(squad_position.equipment.uniform) do
         for _, uniform_spec in ipairs(uniform_slot_specs) do
             for idx, assigned_item_id in ipairs(uniform_spec.assigned) do
