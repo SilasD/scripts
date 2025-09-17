@@ -247,8 +247,10 @@ local function process(unit, args)
     local covered = {} -- map of body part id to true/nil
     if not args.multi then
         for item_id, item in pairs(present_ids) do
-            -- weapons and shields don't "cover" the bodypart they're assigned to. (Needed to figure out if we're missing gloves.)
-            if item._type ~= df.item_weaponst and item._type ~= df.item_shieldst then
+            -- only the five clothing types can block armor for the bodypart they're worn on.
+            if utils.linear_index({ df.item_helmst, df.item_armorst, df.item_glovesst,
+                df.item_pantsst, df.item_shoesst }, item._type)
+            then
                 covered[worn_parts[item_id]] = true
             end
         end
@@ -264,9 +266,13 @@ local function process(unit, args)
         end
     end
 
-    -- Drop everything (except uniform pieces) from body parts which should be covered but aren't
+    -- Drop clothing (except uniform pieces) from body parts which should be covered but aren't
     for worn_item_id, item in pairs(worn_items) do
-        if uniform_assigned_items[worn_item_id] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
+        if uniform_assigned_items[worn_item_id] == nil  -- don't drop uniform pieces
+            -- only the five clothing types can block armor for the bodypart they're worn on.
+            and utils.linear_index({ df.item_helmst, df.item_armorst, df.item_glovesst,
+                df.item_pantsst, df.item_shoesst }, item._type)
+        then
             if uncovered[worn_parts[worn_item_id]] then
                 print(unit_name .. " potentially has " .. item_description(item) .. " blocking a missing uniform item.")
                 printed = true
