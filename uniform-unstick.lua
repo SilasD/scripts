@@ -281,8 +281,12 @@ local function do_drop(item_list)
 
     for _, item in pairs(item_list) do
         local pos = get_visible_item_pos(item)
+
+        -- only drop if the item is on the map and is being held by a unit.
         if not pos then
             dfhack.printerr("Could not find drop location for " .. item_description(item))
+        elseif dfhack.items.getHolderUnit(item) == nil then
+            -- dfhack.printerr("Not in inventory: " .. item_description(item))
         else
             if dfhack.items.moveToGround(item, pos) then
                 print("Dropped " .. item_description(item))
