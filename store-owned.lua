@@ -329,15 +329,6 @@ local function AssignJob(item, unit, jobPos)
     print(('%s has been tasked to store away %s.'):format(strUnitName, strItemName))
 end
 
-local function GetIdx(unitUniform, id)
-    for i, v in pairs(unitUniform) do
-        if v == id then
-            return i
-        end
-    end
-    return nil
-end
-
 local function RemoveFromUniform(item, unit, options)
     if options.discard then
         local strItemName = item and dfhack.items.getReadableDescription(item)
@@ -345,9 +336,16 @@ local function RemoveFromUniform(item, unit, options)
         dfhack.items.setOwner(item, nil)
         print(('Ownership of %s was removed from %s.'):format(strItemName, strUnitName))
     end
-    local unitUniform = unit.uniform.uniforms.CLOTHING
-    local idx = GetIdx(unitUniform, item.id)
-    if idx then unitUniform:erase(idx) end
+    local uniforms = {
+        unit.uniform.uniforms.CLOTHING,
+        unit.uniform.uniforms.REGULAR,
+        unit.uniform.uniforms.TRAINING,
+        unit.uniform.uniforms.TRAINING_RANGED
+    }
+    for _, uniform in ipairs(uniforms) do
+        local idx = utils.linear_index(uniform, item.id)
+        if idx then uniform:erase(idx) end
+    end
 end
 
 local function ParseCommandLine(args)
