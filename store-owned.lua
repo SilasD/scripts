@@ -1,5 +1,6 @@
 -- Task units to store their owned items.
 
+local argparse = require("argparse")
 local utils = require('utils')
 
 local function GetUnit(item, options)
@@ -160,8 +161,6 @@ end
 
 local function GetPosFromContainer(item, unitPos, civzone)
     local containerType = GetContainerType(item)
-    local strStoreContainer = 'Selected item will be stored inside %s of %s.'
-    local strCivzoneName = GetCivzoneName(civzone)
     for _, container in ipairs(civzone.contained_buildings) do
         if containerType:is_instance(container) then
             local containerPos = utils.getBuildingCenter(container)
@@ -170,7 +169,9 @@ local function GetPosFromContainer(item, unitPos, civzone)
                 dfhack.maps.canWalkBetween(containerPos, unitPos)
             then
                 local jobPos = containerPos
-                print(string.format(strStoreContainer, dfhack.buildings.getName(container), strCivzoneName))
+                local containerName = dfhack.buildings.getName(container)
+                local strCivzoneName = GetCivzoneName(civzone)
+                print(('Sufficient storage space available;\n ...selected item will be stored inside %s in %s.'):format(containerName, strCivzoneName))
                 return jobPos
             end
         end
@@ -202,50 +203,29 @@ local function GetPosFromTile(unitPos, civzone)
     end
     ::returnPos::
     if jobPos then
-        local strStoreFloor = 'Selected item will be placed on the floor of %s.'
         local strCivzoneName = GetCivzoneName(civzone)
-        print(string.format(strStoreFloor, strCivzoneName))
+        print(('Unobstructed tile available;\n ...selected item will be dropped off on the floor of %s.'):format(strCivzoneName))
     end
     return jobPos
 end
 
-local function GetPosFromCivzone(unit, item, unitPos, zoneType, putOnFloor)
+local function GetPosFromCivzone(civzones, item, unitPos, zoneType, putOnFloor)
     local jobPos
-    local civzones = unit.owned_buildings
-    local strZoneType = 'assigned room(s)'
-    local strDormZone = 'the dormitory'
-    local strNoRoom = 'Owner of selected item does not have any assigned rooms.'
-    local strNoDorm = 'No dormitory available.'
-    local strNoPos = '%s %s.'
-    local strNoPosReason = 'No storage furniture with sufficient space available in'
-    local strNoRoomAccess = 'Owner of selected item cannot reach'
-    if zoneType == df.civzone_type.Dormitory then
-        civzones = df.global.world.buildings.other.ZONE_DORMITORY
-        strZoneType = strDormZone
-        strNoRoom = strNoDorm
-    end
-    if #civzones > 0 then
-        for _, civzone in ipairs(civzones) do
-            if civzone.type == zoneType then
-                if not putOnFloor then
-                    jobPos = GetPosFromContainer(item, unitPos, civzone)
-                else
-                    strNoPosReason = strNoRoomAccess
-                    jobPos = GetPosFromTile(unitPos, civzone)
-                end
+    for _, civzone in ipairs(civzones) do
+        if civzone.type == zoneType then
+            strCivzoneName = GetCivzoneName(civzone)
+            if not putOnFloor then
+                jobPos = GetPosFromContainer(item, unitPos, civzone)
+            else
+                jobPos = GetPosFromTile(unitPos, civzone)
             end
-            if jobPos then return jobPos end
         end
-        if not jobPos then
-            print(string.format(strNoPos, strNoPosReason, strZoneType))
-        end
-    else
-        print(strNoRoom)
+        if jobPos then return jobPos end
     end
     return nil
 end
 
-local function GetPosFromOwnedCivzone(unit, item, unitPos, putOnFloor)
+local function GetPosFromOwnedCivzone(civzones, item, unitPos, putOnFloor)
     local jobPos
     local zoneTypes = {
         df.civzone_type.Bedroom,
@@ -254,26 +234,23 @@ local function GetPosFromOwnedCivzone(unit, item, unitPos, putOnFloor)
         df.civzone_type.Tomb
     }
     for _, zoneType in ipairs(zoneTypes) do
-        jobPos = GetPosFromCivzone(unit, item, unitPos, zoneType, putOnFloor)
+        jobPos = GetPosFromCivzone(civzones, item, unitPos, zoneType, putOnFloor)
         if jobPos then return jobPos end
     end
     return nil
 end
 
 local function GetPosFromDepot(unitPos)
-    local depots = df.global.world.buildings.other.TRADE_DEPOT
-    if #depots > 0 then
-        for _, depot in ipairs(depots) do
-            -- Item will be dropped on the center tile of the trade depot rather than stored inside it.
-            local depotPos = depot and utils.getBuildingCenter(depot)
-            if depotPos and dfhack.maps.canWalkBetween(depotPos, unitPos) then
-                local jobPos = depotPos
-                print('Selected item will be dropped off at the '..dfhack.buildings.getName(depot))
-                return jobPos
-            end
+    for _, depot in ipairs(df.global.world.buildings.other.TRADE_DEPOT) do
+        -- Item will be dropped on the center tile of the trade depot rather than stored inside it.
+        local depotPos = depot and utils.getBuildingCenter(depot)
+        if depotPos and dfhack.maps.canWalkBetween(depotPos, unitPos) then
+            local jobPos = depotPos
+            print('Depot accessible;\n ...selected item will be dropped off at the '..dfhack.buildings.getName(depot)..'.')
+            return jobPos
+        else
+            print('Unable to drop selected item off at the trade depot.')
         end
-    else
-        print('No trade depot available.')
     end
     return nil
 end
@@ -282,36 +259,60 @@ end
 local function GetJobPos(unit, item, options)
     local jobPos
     local unitPos = unit and xyz2pos(dfhack.units.getPosition(unit))
+    local civzones = unit and unit.owned_buildings
     local putOnFloor = false
-    if options.dorm then
-        goto skipOwnedCivzones
-    elseif options.depot then
-        goto skipDorm
-    end
-    jobPos = GetPosFromOwnedCivzone(unit, item, unitPos, putOnFloor)
-    if not jobPos then
-        putOnFloor = true
-        jobPos = GetPosFromOwnedCivzone(unit, item, unitPos, putOnFloor)
-        if not jobPos then
-            print('')
+    local strNoStorage = 'Unable to store selected item inside a storage furniture in'
+    local strNoTile = 'Unable to drop selected item off on the floor of'
+    local strOwnRoom = 'owner\'s assigned room(s)'
+    local strDorm = 'the dormitory'
+    if options.dorm or #civzones < 1 then
+        if #civzones < 1 then
+            print('Owner of selected item does not have any assigned rooms.')
         end
+        goto getFromDorm
+    elseif options.depot then
+        goto getFromDepot
     end
-    ::skipOwnedCivzones::
+    -- Get container in owned rooms to put item in.
+    jobPos = GetPosFromOwnedCivzone(civzones, item, unitPos, putOnFloor)
     if not jobPos then
+        print(('%s %s.'):format(strNoStorage, strOwnRoom))
+        putOnFloor = true
+        -- Get tile in owned rooms to drop item on.
+        jobPos = GetPosFromOwnedCivzone(civzones, item, unitPos, putOnFloor)
+    end
+    ::getFromDorm::
+    if not jobPos then
+        if not options.dorm and #civzones > 0 then
+            print(('%s %s.'):format(strNoTile, strOwnRoom))
+        end
+        if #df.global.world.buildings.other.ZONE_DORMITORY > 0 then
+            civzones = df.global.world.buildings.other.ZONE_DORMITORY
+        else
+            print('No dormitory available.')
+            goto getFromDepot
+        end
         local zoneType = df.civzone_type.Dormitory
         putOnFloor = false
-        jobPos = GetPosFromCivzone(unit, item, unitPos, zoneType, putOnFloor)
+        -- Get container in dorm to put item in.
+        jobPos = GetPosFromCivzone(civzones, item, unitPos, zoneType, putOnFloor)
         if not jobPos then
+            print(('%s %s.'):format(strNoStorage, strDorm))
             putOnFloor = true
-            jobPos = GetPosFromCivzone(unit, item, unitPos, zoneType, putOnFloor)
-        end
-        if not jobPos then
-            print('')
+            -- Get tile in dorm to drop item on.
+            jobPos = GetPosFromCivzone(civzones, item, unitPos, zoneType, putOnFloor)
         end
     end
-    ::skipDorm::
+    ::getFromDepot::
     if not jobPos then
-        GetPosFromDepot(unitPos)
+        if not options.depot and #civzones > 0 then
+            print(('%s %s.'):format(strNoTile, strDorm))
+        end
+        if #df.global.world.buildings.other.TRADE_DEPOT > 0 then
+            jobPos = GetPosFromDepot(unitPos)
+        else
+            print('No trade depot available.')
+        end
     end
     return jobPos
 end
@@ -323,10 +324,9 @@ local function AssignJob(item, unit, jobPos)
     dfhack.job.attachJobItem(job, item, df.job_role_type.Hauled, -1, -1)
     dfhack.job.addWorker(job, unit)
     dfhack.job.linkIntoWorld(job, true)
-    local strTasked = '%s has been tasked to store away %s.'
     local strUnitName = unit and dfhack.units.getReadableName(unit)
     local strItemName = item and dfhack.items.getReadableDescription(item)
-    print(string.format(strTasked, strUnitName, strItemName))
+    print(('%s has been tasked to store away %s.'):format(strUnitName, strItemName))
 end
 
 local function GetIdx(unitUniform, id)
@@ -343,33 +343,33 @@ local function RemoveFromUniform(item, unit, options)
         local strItemName = item and dfhack.items.getReadableDescription(item)
         local strUnitName = unit and dfhack.units.getReadableName(unit)
         dfhack.items.setOwner(item, nil)
-        local strDiscard = 'Ownership of %s was removed from %s.'
-        print(string.format(strDiscard, strItemName, strUnitName))
+        print(('Ownership of %s was removed from %s.'):format(strItemName, strUnitName))
     end
     local unitUniform = unit.uniform.uniforms.CLOTHING
     local idx = GetIdx(unitUniform, item.id)
     if idx then unitUniform:erase(idx) end
 end
 
-local function processArgs(args)
+local function ParseCommandLine(args)
     local options = {
         help = false,
-        discard = false,
         dorm = false,
-        depot = false
+        depot = false,
+        discard = false
     }
-    if #args > 0 then
-        if args[1] == 'help' then options.help = true
-        elseif args[1] == 'discard' then options.discard = true
-        elseif args[1] == 'dorm' then options.dorm = true
-        elseif args[1] == 'depot' then options.depot = true
-        end
-    end
+    local positionals = argparse.processArgsGetopt(args, {
+        {'h', 'help', handler = function() options.help = true end},
+        {'', 'dorm', handler = function() options.dorm = true end},
+        {'', 'depot', handler = function() options.depot = true
+        options.dorm = false end},
+        {'', 'discard', handler = function() options.discard = true
+        options.dorm = false options.depot = false end},
+    })
     return options
 end
 
 local function Main(args)
-    local options = processArgs(args)
+    local options = ParseCommandLine(args)
     if args[1] == 'help' or options.help then
         print(dfhack.script_help())
         return
@@ -384,7 +384,7 @@ local function Main(args)
         qerror(strCannotStore)
     elseif options.discard then
         if not unit then
-            qerror('Removal of ownership from selected item is not necessary.')
+            qerror('Cannot remove ownership of an ownerless item.')
         else
             goto removeItem
         end

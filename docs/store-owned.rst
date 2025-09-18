@@ -30,14 +30,14 @@ relinquish ownership of the selected item.
 Options
 -------
 
-``discard``
-    Force the owner of the selected item to relinquish ownership of
-    said item. The item will not be tasked for storage. If the item
-    is in the owner's inventory, they will drop it to the ground.
-
-``dorm``
+``--dorm``
     Task the selected owned item for storage in an appropriate storage
     furniture, or on the floor, in any available dormitory zone.
 
-``depot``
+``--depot``
     Task the selected owned item to be dropped off at the trade depot.
+
+``--discard``
+    Force the owner of the selected item to relinquish ownership of
+    said item. The item will not be tasked for storage. If the item
+    is in the owner's inventory, they will drop it on the ground.
