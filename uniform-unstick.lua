@@ -111,6 +111,7 @@ local function remove_item_from_position(squad_position, item_id)
 end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
+--   and a flag that indicates whether a separator line needs to be printed
 local function process(unit, args)
     local silent = args.all -- Don't print details if we're iterating through all dwarves
     local unit_name = dfhack.df2console(dfhack.units.getReadableName(unit))
@@ -266,15 +267,10 @@ local function process(unit, args)
         end
     end
 
-    -- add a spacing line if there was any output
-    if printed then
-        print()
-    end
-
-    return to_drop
+    return to_drop, printed
 end
 
-local function do_drop(item_list)
+local function do_drop(item_list, printed)
     if not item_list then
         return
     end
@@ -294,6 +290,11 @@ local function do_drop(item_list)
                 dfhack.printerr("Could not drop " .. item_description(item))
             end
         end
+    end
+
+    -- add a spacing line if there was any output
+    if printed then
+        print()
     end
 end
 
