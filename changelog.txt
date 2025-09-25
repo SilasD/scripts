@@ -27,11 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `fix/archery-practice`: combine ammo items in units' quivers to fix 'Soldier (no item)' issue
+- `gui/adv-finder`: UI for tracking historical figures and artifacts in adventure mode
 - `store-owned`: task owned items to be stored in the owner's room furniture
 
 ## New Features
 
 ## Fixes
+- `uniform-unstick`: added quivers, backpacks, and flasks/waterskins to uniform analysis
+- `uniform-unstick`: the ``--drop`` option now only evaluates clothing as possible items to drop
+- `uniform-unstick`: the ``--free`` option no longer redundantly reports an improperly assigned item when that item is removed from a uniform
+- `uniform-unstick`: the ``--drop`` and ``--free`` options now only drop items which are actually in a unit's inventory
+- `uniform-unstick`: the ``--all`` and ``--drop`` options, when used together, now print the separator line between each unit's report in the proper place
 
 ## Misc Improvements
 
@@ -43,7 +50,6 @@ Template for new versions:
 - `autotraining`: new tool to assign citizens to a military squad when they need Martial Training
 - `gui/autotraining`: configuration tool for autotraining
 - `entomb`: allow any unit that has a corpse or body parts to be assigned a tomb zone
-
 - `husbandry`: Automatically milk and shear animals at nearby farmer's workshops
 
 ## New Features
