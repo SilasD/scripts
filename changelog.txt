@@ -32,6 +32,11 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `uniform-unstick`: added quivers, backpacks, and flasks/waterskins to uniform analysis
+- `uniform-unstick`: the ``--drop`` option now only evaluates clothing as possible items to drop
+- `uniform-unstick`: the ``--free`` option no longer redundantly reports an improperly assigned item when that item is removed from a uniform
+- `uniform-unstick`: the ``--drop`` and ``--free`` options now only drop items which are actually in a unit's inventory
+- `uniform-unstick`: the ``--all`` and ``--drop`` options, when used together, now print the separator line between each unit's report in the proper place
 
 ## Misc Improvements
 
