@@ -62,38 +62,20 @@ local function bodyparts_that_can_wear(unit, item)
     local bodyparts = {}
     local unitparts = dfhack.units.getCasteRaw(unit).body_info.body_parts
 
-    if item._type == df.item_helmst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.HEAD then
-                table.insert(bodyparts, index)
+    for bodypart_flag, item_type in pairs({
+        HEAD       = df.item_helmst,
+        UPPERBODY  = df.item_armorst,
+        GRASP      = df.item_glovesst,
+        LOWERBODY  = df.item_pantsst,
+        STANCE     = df.item_shoesst,
+    }) do
+        if item._type == item_type then
+            for index, part in ipairs(unitparts) do
+                if part.flags[bodypart_flag] then
+                    table.insert(bodyparts, index)
+                end
             end
         end
-    elseif item._type == df.item_armorst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.UPPERBODY then
-                table.insert(bodyparts, index)
-            end
-        end
-    elseif item._type == df.item_glovesst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.GRASP then
-                table.insert(bodyparts, index)
-            end
-        end
-    elseif item._type == df.item_pantsst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.LOWERBODY then
-                table.insert(bodyparts, index)
-            end
-        end
-    elseif item._type == df.item_shoesst then
-        for index, part in ipairs(unitparts) do
-            if part.flags.STANCE then
-                table.insert(bodyparts, index)
-            end
-        end
-    else
-        -- print("Ignoring item type for "..item_description(item) )
     end
 
     return bodyparts
@@ -109,6 +91,7 @@ end
 -- @param squad_position df.squad_position
 -- @param item_id number
 local function remove_item_from_position(squad_position, item_id)
+    utils.erase_sorted(squad_position.equipment.assigned_items, item_id)
     for _, uniform_slot_specs in ipairs(squad_position.equipment.uniform) do
         for _, uniform_spec in ipairs(uniform_slot_specs) do
             for idx, assigned_item_id in ipairs(uniform_spec.assigned) do
@@ -119,9 +102,16 @@ local function remove_item_from_position(squad_position, item_id)
             end
         end
     end
+    for _, special_case in ipairs({"quiver", "backpack", "flask"}) do
+        if squad_position.equipment[special_case] == item_id then
+            squad_position.equipment[special_case] = -1
+            return
+        end
+    end
 end
 
 -- Will figure out which items need to be moved to the floor, returns an item_id:item map
+--   and a flag that indicates whether a separator line needs to be printed
 local function process(unit, args)
     local silent = args.all -- Don't print details if we're iterating through all dwarves
     local unit_name = dfhack.df2console(dfhack.units.getReadableName(unit))
@@ -164,7 +154,8 @@ local function process(unit, args)
         -- Include weapons so we can check we have them later
         if inv_item.mode == df.inv_item_role_type.Worn or
             inv_item.mode == df.inv_item_role_type.Weapon or
-            inv_item.mode == df.inv_item_role_type.Strapped
+            inv_item.mode == df.inv_item_role_type.Strapped or
+            inv_item.mode == df.inv_item_role_type.Flask
         then
             worn_items[item.id] = item
             worn_parts[item.id] = inv_item.body_part_id
@@ -179,6 +170,12 @@ local function process(unit, args)
                 -- Include weapon and shield so we can avoid dropping them, or pull them out of container/inventory later
                 uniform_assigned_items[assigned_item_id] = df.item.find(assigned_item_id)
             end
+        end
+    end
+    for _, special_case in ipairs({"quiver", "backpack", "flask"}) do
+        local assigned_item_id = squad_position.equipment[special_case]
+        if assigned_item_id ~= -1 then
+            uniform_assigned_items[assigned_item_id] = df.item.find(assigned_item_id)
         end
     end
 
@@ -215,13 +212,7 @@ local function process(unit, args)
     -- Make the equipment.assigned_items list consistent with what is present in equipment.uniform
     for i=#(squad_position.equipment.assigned_items)-1,0,-1 do
         local assigned_item_id = squad_position.equipment.assigned_items[i]
-        -- Quiver, backpack, and flask are assigned in their own locations rather than in equipment.uniform, and thus need their own checks
-        -- If more separately-assigned items are added in the future, this handling will need to be updated accordingly
-        if uniform_assigned_items[assigned_item_id] == nil and
-            assigned_item_id ~= squad_position.equipment.quiver and
-            assigned_item_id ~= squad_position.equipment.backpack and
-            assigned_item_id ~= squad_position.equipment.flask
-        then
+        if uniform_assigned_items[assigned_item_id] == nil then
             local item = df.item.find(assigned_item_id)
             if item ~= nil then
                 print(unit_name .. " has an improperly assigned item, " .. item_description(item) .. "; removing it")
@@ -240,8 +231,10 @@ local function process(unit, args)
     local covered = {} -- map of body part id to true/nil
     if not args.multi then
         for item_id, item in pairs(present_ids) do
-            -- weapons and shields don't "cover" the bodypart they're assigned to. (Needed to figure out if we're missing gloves.)
-            if item._type ~= df.item_weaponst and item._type ~= df.item_shieldst then
+            -- only the five clothing types can block armor for the bodypart they're worn on.
+            if utils.linear_index({ df.item_helmst, df.item_armorst, df.item_glovesst,
+                df.item_pantsst, df.item_shoesst }, item._type)
+            then
                 covered[worn_parts[item_id]] = true
             end
         end
@@ -257,9 +250,13 @@ local function process(unit, args)
         end
     end
 
-    -- Drop everything (except uniform pieces) from body parts which should be covered but aren't
+    -- Drop clothing (except uniform pieces) from body parts which should be covered but aren't
     for worn_item_id, item in pairs(worn_items) do
-        if uniform_assigned_items[worn_item_id] == nil then -- don't drop uniform pieces (including shields, weapons for hands)
+        if uniform_assigned_items[worn_item_id] == nil  -- don't drop uniform pieces
+            -- only the five clothing types can block armor for the bodypart they're worn on.
+            and utils.linear_index({ df.item_helmst, df.item_armorst, df.item_glovesst,
+                df.item_pantsst, df.item_shoesst }, item._type)
+        then
             if uncovered[worn_parts[worn_item_id]] then
                 print(unit_name .. " potentially has " .. item_description(item) .. " blocking a missing uniform item.")
                 printed = true
@@ -270,23 +267,22 @@ local function process(unit, args)
         end
     end
 
-    -- add a spacing line if there was any output
-    if printed then
-        print()
-    end
-
-    return to_drop
+    return to_drop, printed
 end
 
-local function do_drop(item_list)
+local function do_drop(item_list, printed)
     if not item_list then
         return
     end
 
     for _, item in pairs(item_list) do
         local pos = get_visible_item_pos(item)
+
+        -- only drop if the item is on the map and is being held by a unit.
         if not pos then
             dfhack.printerr("Could not find drop location for " .. item_description(item))
+        elseif dfhack.items.getHolderUnit(item) == nil then
+            -- dfhack.printerr("Not in inventory: " .. item_description(item))
         else
             if dfhack.items.moveToGround(item, pos) then
                 print("Dropped " .. item_description(item))
@@ -294,6 +290,11 @@ local function do_drop(item_list)
                 dfhack.printerr("Could not drop " .. item_description(item))
             end
         end
+    end
+
+    -- add a spacing line if there was any output
+    if printed then
+        print()
     end
 end
 
