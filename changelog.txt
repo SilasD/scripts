@@ -27,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `fix/archery-practice`: combine ammo items in units' quivers to fix 'Soldier (no item)' issue
 - `gui/adv-finder`: UI for tracking historical figures and artifacts in adventure mode
 
 ## New Features
