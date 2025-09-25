@@ -111,7 +111,8 @@ local function isGoods(item)
 end
 
 local function GetContainerType(item)
-    local containerType
+    -- Use chest as default, in case of any item not explicitly categorized.
+    local containerType = df.building_boxst
     if isArmor(item) then
         containerType = df.building_armorstandst
     elseif isWeapon(item) then
@@ -378,15 +379,7 @@ local function Main(args)
     end
     local unit = GetUnit(item, options)
     local strCannotStore = 'Unable to task selected item for storage.'
-    if not unit and not options.discard then
-        qerror(strCannotStore)
-    elseif options.discard then
-        if not unit then
-            qerror('Cannot remove ownership of an ownerless item.')
-        else
-            goto removeItem
-        end
-    else
+    if unit and not options.discard then
         local validItem = isValidItem(item, unit)
         if not validItem then
             qerror(strCannotStore)
@@ -396,8 +389,13 @@ local function Main(args)
             qerror('Unable to store selected item in any owned room, dormitory, or trade depot.')
         end
         AssignJob(item, unit, jobPos)
+    elseif not unit and not options.discard then
+        qerror(strCannotStore)
+    else
+        if not unit then
+            qerror('Cannot remove ownership of an ownerless item.')
+        end
     end
-    ::removeItem::
     RemoveFromUniform(item, unit, options)
 end
 
