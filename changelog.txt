@@ -29,6 +29,7 @@ Template for new versions:
 ## New Tools
 - `fix/archery-practice`: combine ammo items in units' quivers to fix 'Soldier (no item)' issue
 - `gui/adv-finder`: UI for tracking historical figures and artifacts in adventure mode
+- `store-owned`: task owned items to be stored in the owner's room furniture
 
 ## New Features
 
@@ -49,7 +50,6 @@ Template for new versions:
 - `autotraining`: new tool to assign citizens to a military squad when they need Martial Training
 - `gui/autotraining`: configuration tool for autotraining
 - `entomb`: allow any unit that has a corpse or body parts to be assigned a tomb zone
-
 - `husbandry`: Automatically milk and shear animals at nearby farmer's workshops
 
 ## New Features
