@@ -34,6 +34,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `ban-cooking`: bans honey added by creatures other than vanilla honey bee
 - `uniform-unstick`: added quivers, backpacks, and flasks/waterskins to uniform analysis
 - `uniform-unstick`: the ``--drop`` option now only evaluates clothing as possible items to drop
 - `uniform-unstick`: the ``--free`` option no longer redundantly reports an improperly assigned item when that item is removed from a uniform
