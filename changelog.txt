@@ -27,6 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 52.05-r1
+
+## New Tools
 - `fix/archery-practice`: combine ammo items in units' quivers to fix 'Soldier (no item)' issue
 - `gui/adv-finder`: UI for tracking historical figures and artifacts in adventure mode
 - `store-owned`: task owned items to be stored in the owner's room furniture
