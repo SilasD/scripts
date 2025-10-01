@@ -47,6 +47,8 @@ picked up by training units can be managed by this tool.
 Any other stacks of ammo items inside the quiver that are not assigned
 for training will not affect the unit's ability to practice archery.
 
+As of DF version 52.05, this bug should already be fixed.
+
 Limitations
 -----------
 
