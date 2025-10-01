@@ -96,7 +96,7 @@ COMMANDS_BY_IDX = {
         desc='Fixes instances of units claiming the same item or an item they don\'t own.',
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/ownership', ']'}},
     {command='fix/protect-nicks', group='bugfix', mode='enable', default=true},
-    {command='fix/stuck-instruments', group='bugfix', mode='repeat',
+    {command='fix/stuck-instruments', group='bugfix', mode='repeat', default=true,
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-instruments', ']'}},
     {command='fix/stuck-squad', group='bugfix', mode='repeat', default=true,
         params={'--time', '1', '--timeUnits', 'days', '--command', '[', 'fix/stuck-squad', ']'}},
