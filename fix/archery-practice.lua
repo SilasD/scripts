@@ -32,7 +32,10 @@ local function GetTrainingAmmo(quiver, squad)
         if df.general_ref_contains_itemst:is_instance(generalRef) then
             local containedAmmo = generalRef
             local ammoItem = containedAmmo and df.item.find(containedAmmo.item_id)
-            if isTrainingAmmo(ammoItem, squad) then
+            if ammoItem and
+                df.item_ammost:is_instance(ammoItem) and
+                isTrainingAmmo(ammoItem, squad)
+            then
                 table.insert(trainingAmmo, ammoItem)
             end
         end
@@ -164,28 +167,15 @@ local function AssignAmmoToSquad(newItems, item, squad)
 end
 
 local function SplitAmmo(item, squad, unit)
+    local pos = unit and xyz2pos(dfhack.units.getPosition(unit))
     local newItems = {}
     repeat
-        local items = dfhack.items.createItem(
-            unit,
-            dfhack.items.findType('AMMO'),
-            item.subtype.subtype,
-            item.mat_type,
-            item.mat_index
-        )
-        if items then
-            for _, newItem in ipairs(items) do
-                newItem:setStackSize(5)
-                newItem.maker_race = item.maker_race
-                newItem:setQuality(item.quality)
-                newItem.skill_rating = item.skill_rating
-                newItem.maker = item.maker
-                newItem.masterpiece_event = item.masterpiece_event
-                table.insert(newItems, newItem)
-            end
-        end
-        item:setStackSize(item.stack_size - 5)
-    until item.stack_size <= 5
+        -- Create in quiver first, in case moving to ground fails.
+        newItem = item:splitStack(5, true)
+        newItem:categorize(true)
+        dfhack.items.moveToGround(newItem, pos)
+        table.insert(newItems, newItem)
+    until item:getStackSize() <= 5
     AssignAmmoToSquad(newItems, item, squad)
 end
 
@@ -207,14 +197,15 @@ end
 
 local function MoveQuiverToEnd(unit, quiver)
     local caste = dfhack.units.getCasteRaw(unit)
-    local bodyPart
+    -- Re-add quiver to inventory regardless of whether there is a valid body part.
+    local bodyPart = -1
     for i, v in ipairs(caste.body_info.body_parts) do
         if v.category == 'BODY_UPPER' then
             bodyPart = i
             break
         end
     end
-    if bodyPart then dfhack.items.moveToInventory(quiver, unit, df.inv_item_role_type.Worn, bodyPart) end
+    dfhack.items.moveToInventory(quiver, unit, df.inv_item_role_type.Worn, bodyPart)
 end
 
 local function FixTrainingUnits(trainingSquads, options)
@@ -231,7 +222,7 @@ local function FixTrainingUnits(trainingSquads, options)
                     if #trainingAmmo == 1 then
                         local item = trainingAmmo[1]
                         -- Split ammo if it's the only training ammo item and its stack size is 25 or larger.
-                        if item.stack_size >= 25 then
+                        if item:getStackSize() >= 25 then
                             if not options.quiet then
                                 print(('Splitting training ammo for %s...'):format(unitName))
                             end
