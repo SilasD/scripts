@@ -32,12 +32,25 @@ local function isValidItem(item)
     return true
 end
 
-local function GetStockpileItems(stockpile)
-    local stockPileItems = dfhack.buildings.getStockpileContents(stockpile)
+local function GetstockpileItems(stockpile)
+    local stockpileItems = dfhack.buildings.getStockpileContents(stockpile)
     local items = {}
-    for _, stockPileItem in ipairs(stockPileItems) do
-        if #stockPileItems > 0 and isValidItem(stockPileItem) then
-            table.insert(items, stockPileItem)
+    for _, stockpileItem in ipairs(stockpileItems) do
+        local containedItems = {}
+        for _, generalRef in ipairs(stockpileItem.general_refs) do
+            if df.general_ref_contains_itemst:is_instance(generalRef) then
+                containedItems = dfhack.items.getContainedItems(stockpileItem)
+            end
+        end
+        if #containedItems > 0 then
+            for _, containedItem in ipairs(containedItems) do
+                if isValidItem(containedItem) then
+                    table.insert(items, containedItem)
+                end
+            end
+        end
+        if #stockpileItems > 0 and isValidItem(stockpileItem) then
+            table.insert(items, stockpileItem)
         end
     end
     return items
@@ -108,7 +121,7 @@ local function Main(args)
     elseif dfhack.world.isFortressMode() then
         local stockpile = dfhack.gui.getSelectedStockpile(true)
         if stockpile and df.building_stockpilest:is_instance(stockpile) then
-            items = GetStockpileItems(stockpile)
+            items = GetstockpileItems(stockpile)
             if #items < 1 then qerror('Selected stockpile contains no items that can be resized.') end
         end
     end
