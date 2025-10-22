@@ -27,6 +27,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `fix/symbol-unstick`: unstick noble symbols that cannot be re-designated.
 
 ## New Features
 
