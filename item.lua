@@ -141,7 +141,7 @@ end
 --- @param upper number # range: 0 (standard) to 5 (masterwork)
 --- @param negate { negate : boolean }|nil
 function condition_quality(tab, lower, upper, negate)
-    local pred = function(item) return lower <= item:getQuality() and item:getQuality() <= upper end
+    local pred = function(item) return lower <= item:getOverallQuality() and item:getOverallQuality() <= upper end
     addPositiveOrNegative(tab, pred, negate)
 end
 
