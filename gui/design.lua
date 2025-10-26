@@ -408,7 +408,7 @@ function Design:init()
                         widgets.CycleHotkeyLabel {
                             view_id='stairs_bottom_subtype',
                             frame={t=1, l=0},
-                            key='CUSTOM_SHIFT_B',
+                            key='CUSTOM_G',
                             label='Bottom Stair Type:',
                             visible=function()
                                 local bounds = self:get_view_bounds()
