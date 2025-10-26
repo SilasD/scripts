@@ -33,6 +33,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `item`: the ``--min-quality`` and ``--max-quality`` options now evaluate overall item quality
 
 ## Misc Improvements
 
