@@ -141,6 +141,15 @@ end
 --- @param upper number # range: 0 (standard) to 5 (masterwork)
 --- @param negate { negate : boolean }|nil
 function condition_quality(tab, lower, upper, negate)
+    local pred = function(item) return lower <= item:getQuality() and item:getQuality() <= upper end
+    addPositiveOrNegative(tab, pred, negate)
+end
+
+--- @param tab conditions
+--- @param lower number # range: 0 (standard) to 5 (masterwork)
+--- @param upper number # range: 0 (standard) to 5 (masterwork)
+--- @param negate { negate : boolean }|nil
+function condition_overall_quality(tab, lower, upper, negate)
     local pred = function(item) return lower <= item:getOverallQuality() and item:getOverallQuality() <= upper end
     addPositiveOrNegative(tab, pred, negate)
 end
@@ -346,10 +355,13 @@ local options = {
     owned = false,
     nowebs = false,
     verbose = false,
+    totalquality = false,
 }
 
 --- @type (fun(item:item):boolean)[]
 local conditions = {}
+
+local minQuality, maxQuality
 
 local function flagsFilter(args, negate)
     local flags = argparse.stringList(args, "flag list")
@@ -375,6 +387,7 @@ local positionals = argparse.processArgsGetopt({ ... }, {
   { nil, 'ignore-webs', handler = function() options.nowebs = true end },
   { 'n', 'dry-run', handler = function() options.dryrun = true end },
   { nil, 'by-type', handler = function() options.bytype = true end },
+  { nil, 'total-quality', handler = function() options.totalquality = true end },
   { 'i', 'inside', hasArg = true,
     handler = function (name)
         local burrow = dfhack.burrows.findByName(name,true)
@@ -407,14 +420,18 @@ local positionals = argparse.processArgsGetopt({ ... }, {
     handler = function(levelst)
         local level = argparse.nonnegativeInt(levelst, 'max-wear')
         condition_wear(conditions, 0, level) end },
+  -- Need to process total-quality argument before processing min/max-quality arguments,
+  -- since there's no guarantee the user will call total-quality first in the command line.
   { 'q', 'min-quality', hasArg = true,
     handler = function(levelst)
         local level = argparse.nonnegativeInt(levelst, 'min-quality')
-        condition_quality(conditions, level, 5) end },
+        minQuality = level end },
+        -- condition_quality(conditions, level, 5) end },
   { 'Q', 'max-quality', hasArg = true,
     handler = function(levelst)
         local level = argparse.nonnegativeInt(levelst, 'max-quality')
-        condition_quality(conditions, 0, level) end },
+        maxQuality = level end },
+        -- condition_quality(conditions, 0, level) end },
   { nil, 'stockpiled',
     handler = function () condition_stockpiled(conditions) end },
   { nil, 'scattered',
@@ -430,6 +447,22 @@ local positionals = argparse.processArgsGetopt({ ... }, {
 if options.help or positionals[1] == 'help' then
     print(dfhack.script_help())
     return
+end
+
+if minQuality then
+    if options.totalquality then
+        condition_overall_quality(conditions, minQuality, 5)
+    else
+        condition_quality(conditions, minQuality, 5)
+    end
+end
+
+if maxQuality then
+    if options.totalquality then
+        condition_overall_quality(conditions, 0, maxQuality)
+    else
+        condition_quality(conditions, 0, maxQuality)
+    end
 end
 
 for i=2,#positionals do

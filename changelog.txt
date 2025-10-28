@@ -33,9 +33,9 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `item`: the ``--min-quality`` and ``--max-quality`` options now evaluate overall item quality
 
 ## Misc Improvements
+- `item`: new ``--total-quality`` option for use in conjunction with ``--min-quality`` or ``--max-quality`` to filter items according to their total quality
 
 ## Removed
 
