@@ -31,11 +31,11 @@ Template for new versions:
 - `resize-armor`: resize armor or clothing item to any creature size.
 
 ## New Features
+- `item`: new ``--total-quality`` option for use in conjunction with ``--min-quality`` or ``--max-quality`` to filter items according to their total quality
 
 ## Fixes
 
-## Misc Improvements
-- `item`: new ``--total-quality`` option for use in conjunction with ``--min-quality`` or ``--max-quality`` to filter items according to their total quality
+## Misc Improvement
 
 ## Removed
 
