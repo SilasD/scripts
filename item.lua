@@ -355,13 +355,14 @@ local options = {
     owned = false,
     nowebs = false,
     verbose = false,
+    filterquality = false,
     totalquality = false,
 }
 
 --- @type (fun(item:item):boolean)[]
 local conditions = {}
 
-local minQuality, maxQuality
+local minQuality, maxQuality = 0, 5
 
 local function flagsFilter(args, negate)
     local flags = argparse.stringList(args, "flag list")
@@ -425,12 +426,12 @@ local positionals = argparse.processArgsGetopt({ ... }, {
   { 'q', 'min-quality', hasArg = true,
     handler = function(levelst)
         local level = argparse.nonnegativeInt(levelst, 'min-quality')
-        minQuality = level end },
+        minQuality = level options.filterquality = true end },
         -- condition_quality(conditions, level, 5) end },
   { 'Q', 'max-quality', hasArg = true,
     handler = function(levelst)
         local level = argparse.nonnegativeInt(levelst, 'max-quality')
-        maxQuality = level end },
+        maxQuality = level options.filterquality = true end },
         -- condition_quality(conditions, 0, level) end },
   { nil, 'stockpiled',
     handler = function () condition_stockpiled(conditions) end },
@@ -449,19 +450,11 @@ if options.help or positionals[1] == 'help' then
     return
 end
 
-if minQuality then
+if options.filterquality then
     if options.totalquality then
-        condition_overall_quality(conditions, minQuality, 5)
+        condition_overall_quality(conditions, minQuality, maxQuality)
     else
-        condition_quality(conditions, minQuality, 5)
-    end
-end
-
-if maxQuality then
-    if options.totalquality then
-        condition_overall_quality(conditions, 0, maxQuality)
-    else
-        condition_quality(conditions, 0, maxQuality)
+        condition_quality(conditions, minQuality, maxQuality)
     end
 end
 
