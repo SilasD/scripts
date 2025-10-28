@@ -35,7 +35,7 @@ Template for new versions:
 
 ## Fixes
 
-## Misc Improvement
+## Misc Improvements
 
 ## Removed
 
