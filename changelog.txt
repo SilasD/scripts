@@ -33,6 +33,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autotraining`: squads once used for training then disabled now properly are treated as disabled.
 
 ## Misc Improvements
 
