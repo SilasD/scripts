@@ -27,6 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 53.01-r1
+
+## New Tools
 - `fix/symbol-unstick`: unstick noble symbols that cannot be re-designated.
 - `resize-armor`: resize armor or clothing item to any creature size.
 
