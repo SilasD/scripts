@@ -10,6 +10,14 @@ training and split stacks of ammo items assigned for training inside the
 quivers to ensure each training unit can have more than one stack to allow
 archery practice to take place.
 
+Note
+----
+
+The bug preventing units from initiating archery practice was fixed in
+DF version 53.01. See below for more information about the issue and how
+this tool works to mitigate it. Running this tool for any other archery
+related issues will not yield useful results.
+
 Usage
 -----
 
