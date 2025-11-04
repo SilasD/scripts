@@ -38,13 +38,64 @@ Template for new versions:
 
 ## Removed
 
+# 53.01-r1
+
+## New Tools
+- `fix/symbol-unstick`: unstick noble symbols that cannot be re-designated.
+- `resize-armor`: resize armor or clothing item to any creature size.
+
+## New Features
+
+## Fixes
+- `autotraining`: squads once used for training then disabled now properly are treated as disabled.
+
+## Misc Improvements
+
+## Removed
+- `fix/archery-practice`: removed from the control panel's bug fixes tab.
+
+# 52.05-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `fix/archery-practice`: now splits instead of combining ammo items in quivers, and moves quivers to end of unit's inventory list
+
+## Misc Improvements
+
+## Removed
+
+# 52.05-r1
+
+## New Tools
+- `fix/archery-practice`: combine ammo items in units' quivers to fix 'Soldier (no item)' issue
+- `gui/adv-finder`: UI for tracking historical figures and artifacts in adventure mode
+- `store-owned`: task owned items to be stored in the owner's room furniture
+
+## New Features
+
+## Fixes
+- `ban-cooking`: bans honey added by creatures other than vanilla honey bee
+- `uniform-unstick`: added quivers, backpacks, and flasks/waterskins to uniform analysis
+- `uniform-unstick`: the ``--drop`` option now only evaluates clothing as possible items to drop
+- `uniform-unstick`: the ``--free`` option no longer redundantly reports an improperly assigned item when that item is removed from a uniform
+- `uniform-unstick`: the ``--drop`` and ``--free`` options now only drop items which are actually in a unit's inventory
+- `uniform-unstick`: the ``--all`` and ``--drop`` options, when used together, now print the separator line between each unit's report in the proper place
+
+## Misc Improvements
+- adapt Lua tools to use new API functionality for creating and assigning jobs
+- `idle-crafting`: properly interrupt interruptible (i.e. "green") social activities
+
+## Removed
+
 # 52.03-r2
 
 ## New Tools
 - `autotraining`: new tool to assign citizens to a military squad when they need Martial Training
 - `gui/autotraining`: configuration tool for autotraining
 - `entomb`: allow any unit that has a corpse or body parts to be assigned a tomb zone
-
 - `husbandry`: Automatically milk and shear animals at nearby farmer's workshops
 
 ## New Features

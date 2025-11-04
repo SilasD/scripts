@@ -139,9 +139,9 @@ end
 
 function getTrainingSquads()
     local squads = {}
-    for squad_id, _ in pairs(state.training_squads) do
+    for squad_id, active in pairs(state.training_squads) do
         local squad = df.squad.find(squad_id)
-        if squad then
+        if active and squad then
             table.insert(squads, squad)
         else
             -- setting to nil during iteration is permitted by lua
