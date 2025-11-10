@@ -2,8 +2,12 @@ local gui = require('gui')
 local widgets = require('gui.widgets')
 local textures = require('gui.textures')
 
-local function activity_button_split(ascii, pens, x, y)
+--
+-- Button label definitions
+--
+local function make_button(ascii, pens, x, y)
     local out = {}
+    -- Grid of 3x3 tiles
     for i=1,3 do
         local tmp = {}
         for j=1,3 do
@@ -37,8 +41,8 @@ local function make_activity_button(ch, color, border_color, border_acolor, x, y
     end
 
     return {
-        inactive = activity_button_split(ascii, make_pens(border_color, color), x, y),
-        active = activity_button_split(ascii, make_pens(border_acolor, color), ax, ay)
+        inactive = make_button(ascii, make_pens(border_color, color), x, y),
+        active = make_button(ascii, make_pens(border_acolor, color), ax, ay)
     }
 end
 
@@ -65,7 +69,7 @@ local goto_button_color = {
     {COLOR_LIGHTCYAN, COLOR_LIGHTRED, COLOR_LIGHTCYAN},
     {COLOR_LIGHTCYAN, COLOR_LIGHTCYAN, COLOR_LIGHTCYAN},
 }
-local goto_button = activity_button_split(goto_button_ascii, goto_button_color, 32, 0)
+local goto_button = make_button(goto_button_ascii, goto_button_color, 32, 0)
 
 
 -- TODO: The usage of these icons requires the ability to adjust screentexpos_flag
@@ -151,7 +155,7 @@ end
 -- Obtain a list of siege engine buildings on the map with specific information
 local function get_siege_engines()
     local siege_list = {}
-    for _, building in ipairs(df.global.world.buildings.all) do
+    for _, building in ipairs(df.global.world.buildings.other.IN_PLAY) do
         if not df.building_siegeenginest:is_instance(building) then goto continue end
         if not building.flags.exists then goto continue end
 
@@ -174,8 +178,8 @@ local function get_siege_engines()
                 or job.job_type == df.job_type.FireBallista
                 or job.job_type == df.job_type.FireBoltThrower then
                 -- Display `Ready` instead of firing when in standby mode
-                -- as the same jobtype is used when actively firing and waiting.
-                -- This is to reduce confusion as no projectiles are made
+                -- as the same job_type is used when actively firing and waiting.
+                -- This is to reduce confusion as no projectiles are fired
                 active_job = building.action == 2 and 'Ready' or 'Firing'
             end
         end
@@ -198,9 +202,9 @@ local function get_siege_engines()
     return siege_list
 end
 
--- Set siegeengine action, returning false if the building wasn't found
+-- Set siegeengine action, returning false if the building isn't found
 local function set_siege_engine_action(id, action)
-    for _, building in ipairs(df.global.world.buildings.all) do
+    for _, building in ipairs(df.global.world.buildings.other.IN_PLAY) do
         if building.id == id then
             if not df.building_siegeenginest:is_instance(building) then return false end
             building.action = action
@@ -214,7 +218,7 @@ end
 SiegeEngineList = defclass(SiegeEngineList, widgets.Panel)
 SiegeEngineList.ATTRS = {
     view_id='list',
-    frame={l=0, r=0, t=3, b=3},
+    frame={l=0, r=0, t=1, b=5},
     frame_style=gui.FRAME_INTERIOR,
 
     -- Filters by siegeengine_type, -1 being all
@@ -224,7 +228,7 @@ SiegeEngineList.ATTRS = {
 function SiegeEngineList:init()
     self:refresh_data()
 
-    self.refresh_rate = 60
+    self.refresh_rate = 30
     self.refresh_timer = 0
 
     self.button_start_x = 24
@@ -240,9 +244,10 @@ function SiegeEngineList:init()
     self:refresh_view(true)
 end
 
+-- Used to manage how often the ui data refreshes
 function SiegeEngineList:onRenderBody()
     self.refresh_timer = self.refresh_timer + 1
-    if (self.refresh_timer < self.refresh_rate) then
+    if (self.refresh_timer > self.refresh_rate) then
         self.refresh_timer = 0
         self:refresh_data()
     end
@@ -260,15 +265,18 @@ local function concat_tables(to, from)
     end
 end
 
--- TODO: Replace constants with df.siegeengine_action enum once merged
+-- TODO: Replace constants with df.siegeengine_action enum once structures merged
 local action_button_order={3, 4, 2, 1, 0}
+local action_button_keybinds = {'CUSTOM_SHIFT_F', 'CUSTOM_SHIFT_T', 'CUSTOM_SHIFT_P', 'CUSTOM_SHIFT_L', 'CUSTOM_SHIFT_N'}
 
-local function add_multiline(to, from)
-    concat_tables(to[1], from[1])
-    concat_tables(to[2], from[2])
-    concat_tables(to[3], from[3])
+-- Add a multiline label definition from `from` to `to` starting at y=y_start or 0
+local function add_multiline(to, from, y_start)
+    for i, item in pairs(from) do
+        concat_tables(to[i + (y_start or 0)], from[i])
+    end
 end
 
+-- Label string callbacks, used to update the display without resetting the scrolling List
 local action_text_pen = dfhack.pen.parse({ fg=COLOR_GREEN })
 function SiegeEngineList:get_action_text(id)
     return self.engines[id].active_job or ''
@@ -294,6 +302,7 @@ function SiegeEngineList:get_activity_button_tile(id, action, x, y)
     return activity_buttons[action][self.engines[id].action == action and 'active' or 'inactive'][y][x].tile
 end
 
+-- Generate the multiline Label display for an engine
 function SiegeEngineList:make_entry_text(engine)
     local lines = {
         {{text=self:callback('get_name_text', engine.id), width=self.button_start_x}},
@@ -308,10 +317,10 @@ function SiegeEngineList:make_entry_text(engine)
     -- Goto Position Button
     add_multiline(lines, goto_button)
 
-    -- Blank
+    -- Padding following goto button
     add_multiline(lines, {{{text='', width=3}},{{text='', width=3}},{{text='', width=3}}})
 
-    -- FireAtWill, PracticeFire, PrepareToFire, KeepLoaded, NotInUse
+    -- Siege Engine activity selection buttons
     for _, button_action in ipairs(action_button_order) do
         for y=1,3 do
             for x=1,3 do
@@ -320,6 +329,7 @@ function SiegeEngineList:make_entry_text(engine)
         end
     end
 
+    -- Transform multiline label into a single label with newlines
     local out_tokens = {}
     for i=1,3 do
         concat_tables(out_tokens, lines[i])
@@ -329,6 +339,8 @@ function SiegeEngineList:make_entry_text(engine)
     return out_tokens
 end
 
+-- Refresh the engine information being displayed, but not the list.
+-- Updating data here *does not* add or remove new/deleted engines.
 function SiegeEngineList:refresh_data()
     local old_engines = self.engines
     self.engines = get_siege_engines()
@@ -350,6 +362,7 @@ function SiegeEngineList:refresh_data()
     end
 end
 
+-- Refresh the engine list, updating to display new/deleted engines correctly.
 function SiegeEngineList:refresh_view(refresh_data)
     if refresh_data then self:refresh_data() end
     local choices = {}
@@ -357,10 +370,30 @@ function SiegeEngineList:refresh_view(refresh_data)
         table.insert(choices, {
             text=self:make_entry_text(data),
             search_key="",
-            data=data
+            data=data.id
         });
     end
     self.subviews.list:setChoices(choices)
+end
+
+function SiegeEngineList:reveal_selected()
+    local _, selected = self.subviews.list:getSelected()
+    if selected ~= nil then
+        dfhack.gui.revealInDwarfmodeMap(self.engines[selected.data].pos, true, true)
+    end
+end
+
+function SiegeEngineList:set_selected_action(action)
+    local _, selected = self.subviews.list:getSelected()
+
+    local successful = set_siege_engine_action(selected.data, action)
+    if not successful then
+        self:refresh_view(true)
+        return
+    end
+
+    -- Successfully updated, just update the cached state
+    self.engines[selected.data].action = action
 end
 
 function SiegeEngineList:onInput(keys)
@@ -382,13 +415,13 @@ function SiegeEngineList:onInput(keys)
         return
     end
 
-    self.subviews.list:setSelected(idx)
+    list:setSelected(idx)
 
-    local engine = list:getChoices()[idx].data
+    -- 0 is goto, 1 is blank, following are action buttons
     local button_pressed = math.ceil((x-self.button_start_x+1)/3)-1
 
     if button_pressed == 0 then
-        dfhack.gui.revealInDwarfmodeMap(engine.pos, true, true)
+        self:reveal_selected()
         return
     end
 
@@ -398,14 +431,7 @@ function SiegeEngineList:onInput(keys)
     end
 
     local action = action_button_order[button_pressed-1]
-    local successful = set_siege_engine_action(engine.id, action)
-    if not successful then
-        self:refresh_view(true)
-        return
-    end
-
-    -- Successfully updated, just update the cached state
-    self.engines[engine.id].action = action
+    self:set_selected_action(action)
 end
 
 -- SiegeManager
@@ -423,7 +449,7 @@ function SiegeManager:init()
     self:addviews({
         SiegeEngineList {},
         widgets.CycleHotkeyLabel {
-            frame={b=1},
+            frame={b=3},
             key='CUSTOM_T',
             on_change=self:callback('set_type_filter'),
             label='Show Types:',
@@ -435,12 +461,38 @@ function SiegeManager:init()
             },
             initial_option=1,
         },
+        widgets.HotkeyLabel {
+            frame={b=0},
+            key='CUSTOM_CTRL_C',
+            label='Reveal in World',
+            on_activate=self:callback('reveal_selected')
+        },
     })
+
+    for i, action_button in ipairs(action_button_order) do
+        self:addviews({
+            widgets.HotkeyLabel {
+                frame = {b=1, l=(i - 1)*2},
+                key = action_button_keybinds[i],
+                key_sep = i == #action_button_order and ': ' or '',
+                label = i == #action_button_order and 'Set Action' or '',
+                on_activate = self:callback('set_action', action_button)
+            }
+        })
+    end
 end
 
 function SiegeManager:set_type_filter(new)
     self.subviews.list.type_filter = new
-    self.subviews.list:hard_refresh()
+    self.subviews.list:refresh_view(true)
+end
+
+function SiegeManager:reveal_selected()
+    self.subviews.list:reveal_selected()
+end
+
+function SiegeManager:set_action(action)
+    self.subviews.list:set_selected_action(action)
 end
 
 -- SiegeManagerScreen
@@ -459,5 +511,4 @@ if not dfhack.isMapLoaded() then
     qerror('requires a map to be loaded')
 end
 
-view = SiegeManagerScreen{}:show()
--- view = view and view:raise() or SiegeManagerScreen{}:show()
+view = view and view:raise() or SiegeManagerScreen{}:show()
