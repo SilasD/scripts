@@ -202,23 +202,36 @@ local function get_siege_engines()
     return siege_list
 end
 
--- Set siegeengine action, returning false if the building isn't found
-local function set_siege_engine_action(id, action)
-    for _, building in ipairs(df.global.world.buildings.other.IN_PLAY) do
-        if building.id == id then
-            if not df.building_siegeenginest:is_instance(building) then return false end
-            building.action = action
+local function item_in_list(item, list)
+    for _, v in ipairs(list) do
+        if v == item then
             return true
         end
     end
     return false
 end
 
+-- Set siegeengine action, returning false if the building isn't found
+local function set_siege_engine_action(id_list, action)
+    local count = 0
+    for _, building in ipairs(df.global.world.buildings.other.IN_PLAY) do
+        if item_in_list(building.id, id_list) then
+            if not df.building_siegeenginest:is_instance(building) then return false end
+            building.action = action
+            count = count + 1
+            if count == #id_list then
+                return count
+            end
+        end
+    end
+    return count
+end
+
 -- SiegeEngineList
 SiegeEngineList = defclass(SiegeEngineList, widgets.Panel)
 SiegeEngineList.ATTRS = {
     view_id='list',
-    frame={l=0, r=0, t=1, b=5},
+    frame={l=0, r=0, t=1, b=7},
     frame_style=gui.FRAME_INTERIOR,
 
     -- Filters by siegeengine_type, -1 being all
@@ -383,10 +396,27 @@ function SiegeEngineList:reveal_selected()
     end
 end
 
+function SiegeEngineList:set_all_action(action)
+    local listed = {}
+    for key, _ in pairs(self.engines) do
+        listed[#listed+1] = key
+    end
+
+    local count = set_siege_engine_action(listed, action)
+    if count ~= #listed then
+        self:refresh_view(true)
+        return
+    end
+
+    for _, engine in ipairs(self.engines) do
+        engine.action = action
+    end
+end
+
 function SiegeEngineList:set_selected_action(action)
     local _, selected = self.subviews.list:getSelected()
 
-    local successful = set_siege_engine_action(selected.data, action)
+    local successful = set_siege_engine_action({selected.data}, action)
     if not successful then
         self:refresh_view(true)
         return
@@ -449,7 +479,7 @@ function SiegeManager:init()
     self:addviews({
         SiegeEngineList {},
         widgets.CycleHotkeyLabel {
-            frame={b=3},
+            frame={b=6},
             key='CUSTOM_T',
             on_change=self:callback('set_type_filter'),
             label='Show Types:',
@@ -460,6 +490,14 @@ function SiegeManager:init()
                 {label='Catapult', value=df.siegeengine_type.Catapult},
             },
             initial_option=1,
+        },
+        widgets.ToggleHotkeyLabel {
+            view_id = 'configure_all',
+            frame={b=2},
+            key = 'CUSTOM_SHIFT_A',
+            key_sep = ': ',
+            label = 'Configure All',
+            initial_option=2,
         },
         widgets.HotkeyLabel {
             frame={b=0},
@@ -472,7 +510,7 @@ function SiegeManager:init()
     for i, action_button in ipairs(action_button_order) do
         self:addviews({
             widgets.HotkeyLabel {
-                frame = {b=1, l=(i - 1)*2},
+                frame = {b=3, l=(i - 1)*2},
                 key = action_button_keybinds[i],
                 key_sep = i == #action_button_order and ': ' or '',
                 label = i == #action_button_order and 'Set Action' or '',
@@ -492,7 +530,11 @@ function SiegeManager:reveal_selected()
 end
 
 function SiegeManager:set_action(action)
-    self.subviews.list:set_selected_action(action)
+    if self.subviews.configure_all:getOptionValue() then
+        self.subviews.list:set_all_action(action)
+    else
+        self.subviews.list:set_selected_action(action)
+    end
 end
 
 -- SiegeManagerScreen
