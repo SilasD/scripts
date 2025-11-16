@@ -33,6 +33,8 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `quickfort`: support for reinforced walls and bolt throwers
+- `gui/design`: can now construct reinforced walls
 
 ## Removed
 
