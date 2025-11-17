@@ -27,17 +27,35 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+- `item`: new ``--total-quality`` option for use in conjunction with ``--min-quality`` or ``--max-quality`` to filter items according to their total quality
+
+## Fixes
+
+## Misc Improvements
+- `quickfort`: support for reinforced walls and bolt throwers
+- `gui/design`: can now construct reinforced walls
+
+## Removed
+
+# 53.01-r1
+
+## New Tools
+- `fix/symbol-unstick`: unstick noble symbols that cannot be re-designated.
 - `resize-armor`: resize armor or clothing item to any creature size.
 
 ## New Features
 
 ## Fixes
+- `autotraining`: squads once used for training then disabled now properly are treated as disabled.
 - `gui/design`: designating a single-level stair construction now properly follows the selected stair type.
 - `gui/design`: adjusted conflicting keybinds, diagonal line reverse becoming ``R`` and bottom stair type becoming ``g``.
 
 ## Misc Improvements
 
 ## Removed
+- `fix/archery-practice`: removed from the control panel's bug fixes tab.
 
 # 52.05-r2
 

@@ -366,6 +366,7 @@ function Design:init()
 
     local build_options = {
         {label='Walls', value='Cw'},
+        {label='Reinforced Walls', value='CW'},
         {label='Floor', value='Cf'},
         {label='Fortification', value='CF'},
         {label='Ramps', value='Cr'},
