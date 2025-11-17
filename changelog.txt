@@ -27,6 +27,18 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Removed
+
+# 53.04-r1
+
+## New Tools
 - `gui/siegemanager`: manage your siege engines at a glance.
 
 ## New Features
@@ -35,8 +47,8 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
-- `quickfort`: support for reinforced walls and bolt throwers
 - `gui/design`: can now construct reinforced walls
+- `quickfort`: support for reinforced walls and bolt throwers
 
 ## Removed
 
