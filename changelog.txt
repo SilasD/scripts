@@ -31,6 +31,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+= `modtools/set-personality`: use correct caste trait ranges; fixes `gui/gm-unit` being unable to correctly randomize traits or set traits to caste average
 
 ## Misc Improvements
 
