@@ -32,6 +32,8 @@ Template for new versions:
 - `item`: new ``--total-quality`` option for use in conjunction with ``--min-quality`` or ``--max-quality`` to filter items according to their total quality
 
 ## Fixes
+- `gui/design`: designating a single-level stair construction now properly follows the selected stair type.
+- `gui/design`: adjusted conflicting keybinds, diagonal line reverse becoming ``R`` and bottom stair type becoming ``g``.
 
 ## Misc Improvements
 - `quickfort`: support for reinforced walls and bolt throwers
@@ -49,8 +51,6 @@ Template for new versions:
 
 ## Fixes
 - `autotraining`: squads once used for training then disabled now properly are treated as disabled.
-- `gui/design`: designating a single-level stair construction now properly follows the selected stair type.
-- `gui/design`: adjusted conflicting keybinds, diagonal line reverse becoming ``R`` and bottom stair type becoming ``g``.
 
 ## Misc Improvements
 
