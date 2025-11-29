@@ -33,6 +33,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `combine`: try harder to find the currently-selected stockpile
 
 ## Removed
 
