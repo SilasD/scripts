@@ -31,6 +31,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `empty-bin`: renamed `--liquids` parameter to `--force` and made emptying of containers (bags) with powders contingent on that parameter. Previously powders would just always get disposed.
 
 ## Misc Improvements
 
