@@ -13,6 +13,7 @@ that repo.
 Template for new versions:
 
 ## New Tools
+- `fix/codex-pages`: add pages to written content that have unspecified page counts.
 
 ## New Features
 
