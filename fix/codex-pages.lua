@@ -64,7 +64,7 @@ local function GetPageCount(targetWcType)
         ['BiographicalDictionary'] = {
             upperCount = math.max(300, math.min(500, math.ceil(df.global.hist_figure_next_id / 1000))),
             lowerCount = math.max(100, math.min(150, math.floor(df.global.hist_figure_next_id / 10000))),
-            mode = nil},
+            mode = nil}, -- Very few samples were available, so this one is mostly arbitrary.
         ['Genealogy'] = {upperCount = 5, lowerCount = 1, mode = 4},
         ['Encyclopedia'] = {upperCount = 150, lowerCount = 50, mode = nil},
         ['CulturalHistory'] = {upperCount = 450, lowerCount = 100, mode = 200},
@@ -121,12 +121,14 @@ local function GetPageCountModifier(targetStyle, targetStrength)
     for style, modifier in pairs(styles) do
         if df.written_content_style[style] == targetStyle then
             pageCountModifier = modifier
+            break
         end
     end
     for strength, addModifier in pairs(strength) do
         if df.writing_style_modifier_type[strength] == targetStrength then
             if pageCountModifier ~= 0 then
                 pageCountModifier = pageCountModifier * addModifier
+                break
             end
         end
     end
@@ -136,7 +138,7 @@ end
 local rng = dfhack.random.new(nil, 10)
 local seed = dfhack.world.ReadCurrentTick()
 
-local function SetPageCount(upperCount, lowerCount, mode, seed)
+local function SetPageCount(upperCount, lowerCount, mode)
     if upperCount > 1 then
         local range = upperCount - lowerCount
         local increment = 1 + math.floor(range ^ 2)
@@ -184,7 +186,7 @@ local function AddPages(wc)
         end
         mode = mode or math.ceil((lowerCount + upperCount) / 2)
         wc.page_start = 1
-        wc.page_end = SetPageCount(upperCount, lowerCount, mode, seed)
+        wc.page_end = SetPageCount(upperCount, lowerCount, mode)
         pages = wc.page_end
     end
     return pages
