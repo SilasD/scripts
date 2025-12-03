@@ -24,7 +24,7 @@ Options
     Add pages to the selected codex, quire, or scroll item.
 
 ``site``
-    Add pages to all written works that were authored in the player's fortress.
+    Add pages to all written works that are currently in the player's fortress.
 
 ``all``
     Add pages to all written works to have ever existed in the world.

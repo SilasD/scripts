@@ -20,9 +20,12 @@ local function GetBooks(target)
         local item = dfhack.gui.getSelectedItem(true)
         if item and isBook(item) then table.insert(books, item) end
     elseif target.site then
-        -- Does not include written content not created in player's fortress.
-        local siteArtifacts = df.global.world.items.other.ANY_ARTIFACT
-        for _, item in ipairs(siteArtifacts) do
+        local siteTools = df.global.world.items.other.TOOL
+        for _, item in ipairs(siteTools) do
+            if isBook(item) then table.insert(books, item) end
+        end
+        local siteBooks = df.global.world.items.other.BOOK
+        for _, item in ipairs(siteBooks) do
             if isBook(item) then table.insert(books, item) end
         end
     end
