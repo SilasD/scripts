@@ -21,7 +21,7 @@ local function emptyContainer(container)
             local itemType = item:getType()
             local skip = not options.force and (itemType == df.item_type.LIQUID_MISC or itemType == df.item_type.DRINK or itemType == df.item_type.POWDER_MISC)
             if skip then
-                print('  ' .. dfhack.items.getReadableDescription(item) .. ' was skipped because the --force flag was not provided')
+                print('  ' .. dfhack.items.getReadableDescription(item) .. ' was skipped (use --force to override)')
             else
                 print('  ' .. dfhack.items.getReadableDescription(item))
                 dfhack.items.moveToGround(item, pos)
