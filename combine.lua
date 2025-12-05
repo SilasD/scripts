@@ -740,8 +740,8 @@ local function get_stockpile_here()
     -- try finding the stockpile by viewed item or first item in itemlist viewsheet.
     if building == nil then
         local item = nil
-        if dfhack.gui.getSelectedItem(--[[silent]]true) ~= nil then
-            item = dfhack.gui.getSelectedItem(--[[silent]]true)
+        if dfhack.gui.getSelectedItem(true) ~= nil then
+            item = dfhack.gui.getSelectedItem(true)
         elseif tonumber(dfhack.DF_VERSION:match("^0*%.*(%d+%.%d+)")) >= 50.07   -- matchFocusString() in Commit a770a4c
             and dfhack.gui.matchFocusString("dwarfmode/ViewSheets/ITEM_LIST", dfhack.gui.getDFViewscreen())
             and df.global.game.main_interface.view_sheets.open == true
