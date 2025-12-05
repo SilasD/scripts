@@ -12,10 +12,10 @@ Usage
 
 ``fix/codex-pages [this|site|all]``
 
-This tool will add pages to written works that do not have their start and end
-pages specified. The number of pages to be added will be determined mainly by
-the type of the written content, modified by its writing style and the strength
-of the style, with weighted randomization.
+Pages will be added to written works that do not have properly specified page
+counts. The number of pages to be added will be determined mainly by the type
+of the written content, modified by its writing style and the strength of the
+style, with weighted randomization.
 
 Options
 -------
@@ -32,7 +32,13 @@ Options
 Note
 ----
 
-Quires and scrolls will never display the number of pages they contain even if
-their page count is specified in the data structure of their written content.
-Once a quire is binded into a codex, the number of pages it contains will be
-displayed in its item description.
+This tool mitigates :bug:`9268` by generating new, randomized information for
+written content that do not have the start and end pages specified in their
+data structure. It cannot retrieve page count from written content that was
+already missing the page count information.
+
+Also, unbound quires and scrolls do not display the number of pages they contain
+in their item description even if the data structure of their written content
+holds the information. However, once a quire that has written content with
+appropriately specified page count information is bound into a codex, its page
+count will be properly displayed in the resulting codex's item description.
