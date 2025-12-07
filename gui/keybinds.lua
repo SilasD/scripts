@@ -92,19 +92,19 @@ function SelectKeyDialog:init()
                     text = "WARNING: This keybind may be disruptive to gameplay.\nProceed cautiously.",
                     visible = function() return self.warning end,
                 },
-                widgets.Label {
+                widgets.HotkeyLabel {
                     frame = { b = 0, l = 2 },
+                    key = 'SELECT',
+                    label = 'Confirm',
                     auto_width = true,
-                    text_pen = COLOR_LIGHTGREEN,
-                    text = 'Confirm',
                     enabled = function() return self.key ~= nil end,
-                    on_click = self:callback('onConfirm')
+                    on_activate = self:callback('onConfirm')
                 },
-                widgets.Label {
-                    frame = { b = 0, l = 12 },
+                widgets.HotkeyLabel {
+                    frame = { b = 0, l = 18 },
+                    key = 'LEAVESCREEN',
+                    label = 'Cancel',
                     auto_width = true,
-                    text_pen = COLOR_BROWN,
-                    text = 'Cancel',
                     on_click = self:callback('onCancel')
                 },
             },
@@ -129,19 +129,6 @@ function SelectKeyDialog:onIdle()
         self.needs_refresh = false
         self:updateLayout()
     end
-end
-
-function SelectKeyDialog:onInput(keys)
-    -- Handle Esc/Enter as Cancel/Confirm
-    if keys.SELECT then
-        self:onConfirm()
-        return true
-    end
-    if keys.LEAVESCREEN then
-        self:onCancel()
-        return true
-    end
-    return SelectKeyDialog.super.onInput(self, keys)
 end
 
 function SelectKeyDialog:onConfirm()
