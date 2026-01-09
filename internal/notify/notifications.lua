@@ -334,76 +334,62 @@ local function save_popup()
     end
 end
 
-local function get_citizens_with_missing_nemesis_records()
-    local citizens = {}
-    for _, unit in ipairs(dfhack.units.getCitizens(true)) do
-        if dfhack.units.getGeneralRef(unit, df.general_ref_type.IS_NEMESIS) then
-            local nid = dfhack.units.getGeneralRef(unit, df.general_ref_type.IS_NEMESIS).nemesis_id
-            if df.nemesis_record.find(nid) == nil then
-                table.insert(citizens, '  ' .. dfhack.units.getReadableName(unit))
+local function get_units_with_missing_nemesis_records()
+    local namelist = {}
+    for _, unit in ipairs(df.global.world.units.active) do
+        local ref = dfhack.units.getGeneralRef(unit, df.general_ref_type.IS_NEMESIS)
+        if ref then
+            local nrec = ref:getNemesis()
+            if nrec == nil then
+                table.insert(namelist, dfhack.units.getReadableName(unit))
             end
         end
     end
-    if #citizens == 0 then return end
-    table.insert(citizens, 1, '\n' .. 'These citizens are missing nemesis records:')
-    table.insert(citizens, '\n')
-    return table.concat(citizens, '\n')
+    return namelist
 end
 
 -- the order of this list controls the order the notifications will appear in the overlay
 NOTIFICATIONS_BY_IDX = {
     {
         name='missing_nemesis',
-        desc='Reports missing nemesis records, indicating possible game corruption.',
+        desc='Reports missing nemesis records, indicating savegame corruption.',
         default=true,
         fn = function()
             local count = df.global.nemesis_next_id - #df.global.world.nemesis.all
             if count == 0 then return end
-            return string.format('missing %d nemesis record%s', count, (count == 1 and '' or 's'))
+            return { {
+                pen = COLOR_LIGHTRED,
+                text = ('missing %d nemesis record%s'):format(count, count == 1 and '' or 's'),
+            } }
         end,
         on_click=function()
-            local message = {}
-            table.insert(message,  -- indentation MATTERS here!
-                    (([[THE GAME MAY BE CORRUPT!  Or it may be fine.
-                        This notification is experimental.
-
-                        Nemesis records are missing from the world.
-                        Missing nemesis records have been known to
-                        cause crashes during game save or quit.
-
-                        ]] ):gsub(string.rep(' ',24), '')) )
-            local redtext = get_citizens_with_missing_nemesis_records()
-            if redtext ~= nil and redtext ~= '' then
-                for _, line in ipairs(redtext:split('\n')) do
-                    table.insert(message, { pen = COLOR_LIGHTRED, text = line })
+            local message = {
+                { pen = COLOR_RED,   text = 'This save game may be corrupt.' }, NEWLINE,
+                NEWLINE,
+                { pen = COLOR_WHITE, text = 'This save game contains units which are missing' }, NEWLINE,
+                { pen = COLOR_WHITE, text = 'their assigned nemesis records.' }, NEWLINE,
+                NEWLINE,
+                { pen = COLOR_WHITE, text = 'Missing nemesis records have been known to cause' }, NEWLINE,
+                { pen = COLOR_WHITE, text = 'crashes during game save and when retiring forts.' }, NEWLINE,
+                NEWLINE,
+                { pen = COLOR_WHITE, text = 'Units with missing nemesis records will' }, NEWLINE,
+                { pen = COLOR_RED,   text = 'permanently disappear' },
+                { pen = COLOR_WHITE, text =                      ' if they leave the map or' }, NEWLINE,
+                { pen = COLOR_WHITE, text = 'if the fort is retired.' }, NEWLINE,
+                NEWLINE,
+            }
+            local redtext = get_units_with_missing_nemesis_records()
+            if #redtext > 0 then
+                table.insert(message, { pen = COLOR_RED,
+                    text = 'These active units are missing their nemesis records:' })
+                table.insert(message, NEWLINE)
+                for _, line in ipairs(redtext) do
+                    table.insert(message, { pen = COLOR_LIGHTRED, text = '  ' .. line })
                     table.insert(message, NEWLINE)
                 end
             end
-            table.insert(message,  -- indentation MATTERS here!
-                    (([[Suggested course of action:
-                        * Read all of these steps before continuing.
-
-                        * Press `Esc` to show the "Dwarf Fortress"
-                          menu, and choose "Save and continue playing".
-                          Name the savegame "corrupt-nemesis".
-
-                        * If the save succeeds, open that menu again
-                          and choose "Quit without saving".  This may
-                          crash the game!  If the game doesn't crash,
-                          choose "Quit" at the main menu.
-
-                        * Restart Dwarf Fortress and try to load the
-                          "corrupt-nemesis" savegame.
-
-                        * If it loads, things are probably fine, and
-                          you can disable this notification by clicking
-                          the gear symbol to get the notifications
-                          settings, then clicking on "missing_nemesis"
-                          to change it to Disabled.
-                          ]] ):trim():gsub(string.rep(' ',24), '')) )
-            dlg.showMessage(get_citizens_with_missing_nemesis_records() ~= ''
-                and 'Citizens are missing nemesis records' or 'Missing nemesis records',
-                message, COLOR_WHITE)
+            dlg.showMessage((#redtext > 0 and 'Active units are' or 'This world is')
+                .. ' missing nemesis records',message, COLOR_WHITE)
         end,
     },
     {
