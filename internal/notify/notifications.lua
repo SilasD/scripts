@@ -3,6 +3,7 @@
 local dlg = require('gui.dialogs')
 local gui = require('gui')
 local json = require('json')
+local utils = require('utils')
 local list_agreements = reqscript('list-agreements')
 local repeat_util = require('repeat-util')
 local stuck_squad = reqscript('fix/stuck-squad')
@@ -334,7 +335,8 @@ local function save_popup()
     end
 end
 
-local function get_units_with_missing_nemesis_records()
+---@return string[]
+local function get_active_units_with_missing_nemesis_records()
     local namelist = {}
     for _, unit in ipairs(df.global.world.units.active) do
         local ref = dfhack.units.getGeneralRef(unit, df.general_ref_type.IS_NEMESIS)
@@ -348,6 +350,47 @@ local function get_units_with_missing_nemesis_records()
     return namelist
 end
 
+---@param vector any[]         # a df vector or array, or a Lua list.
+---@param field string?        # nil, or the field name to sort on.
+---@param comparator fun(a:any, b:any):integer|nil
+---     # an optional comparator that returns -1,0,1 per utils.compare_* .
+---     # nil falls back to utils.compare or utils.compare_field.
+---     # if a comparator is given, the field parameter is ignored.
+---@return boolean
+local function verify_vector_is_sorted(vector, field, comparator)
+    assert(type(vector) == 'table' or utils.is_container(vector))
+    assert(type(field) == 'string' or field == nil)
+    assert(type(comparator) == 'function' or comparator == nil)
+    comparator = comparator or utils.compare_field(field)
+    local lo, hi
+    if type(vector) == 'table' then
+        lo, hi = 1, #vector
+    else
+        lo, hi = 0, #vector-1
+    end
+    local sorted = true
+    for i = lo, hi-1 do
+        if comparator(vector[i], vector[i+1]) ~= -1 then
+            sorted = false
+            break
+        end
+    end
+    return sorted
+end
+
+local cache_nemesis_all_is_sorted = {}
+---only verifies if the vector length has changed.
+---@return boolean
+local function verify_nemesis_all_is_sorted()
+    local vector = df.global.world.nemesis.all
+    if #vector == cache_nemesis_all_is_sorted.length then
+        return cache_nemesis_all_is_sorted.sorted
+    end
+    cache_nemesis_all_is_sorted.length = #vector
+    cache_nemesis_all_is_sorted.sorted = verify_vector_is_sorted(vector, 'id')
+    return cache_nemesis_all_is_sorted.sorted
+end
+
 -- the order of this list controls the order the notifications will appear in the overlay
 NOTIFICATIONS_BY_IDX = {
     {
@@ -355,14 +398,29 @@ NOTIFICATIONS_BY_IDX = {
         desc='Reports missing nemesis records, indicating savegame corruption.',
         default=true,
         fn = function()
+            if not verify_nemesis_all_is_sorted() then
+                return { {
+                    pen = COLOR_LIGHTRED,
+                    text = 'nemesis vector not sorted'
+                } }
+            end
             local count = df.global.nemesis_next_id - #df.global.world.nemesis.all
             if count == 0 then return end
             return { {
                 pen = COLOR_LIGHTRED,
-                text = ('missing %d nemesis record%s'):format(count, count == 1 and '' or 's'),
+                text = ('missing %d nemesis record%s'):format(count, count == 1 and '' or 's')
             } }
         end,
         on_click=function()
+            if not verify_nemesis_all_is_sorted() then
+                local message =
+                    'This save game is corrupt.\n\nThe world.nemesis.global vector\n' ..
+                    'of this savegame is not sorted.\n\nSome attempts to lookup the\n' ..
+                    'nemesis record for a unit or\nhistorical figure will fail.\n\n' ..
+                    'This should be reported to\nBay 12 Games as a bug.\n'
+                dlg.showMessage('nemesis vector not sorted', message, COLOR_RED)
+                return
+            end
             local message = {
                 { pen = COLOR_RED,   text = 'This save game may be corrupt.' }, NEWLINE,
                 NEWLINE,
@@ -378,7 +436,7 @@ NOTIFICATIONS_BY_IDX = {
                 { pen = COLOR_WHITE, text = 'if the fort is retired.' }, NEWLINE,
                 NEWLINE,
             }
-            local redtext = get_units_with_missing_nemesis_records()
+            local redtext = get_active_units_with_missing_nemesis_records()
             if #redtext > 0 then
                 table.insert(message, { pen = COLOR_RED,
                     text = 'These active units are missing their nemesis records:' })
@@ -668,3 +726,9 @@ local function get_config()
 end
 
 config = get_config()
+
+dfhack.onStateChange['internal/notify/notifications'] = function(event)
+    if event == SC_WORLD_LOADED or event == SC_WORLD_UNLOADED then
+        cache_nemesis_all_is_sorted = {}
+    end
+end
