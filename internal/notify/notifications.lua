@@ -335,24 +335,25 @@ local function save_popup()
     end
 end
 
----@return df.unit[]
-local function _get_active_units_with_missing_nemesis_records()
+---@return df.unit.id[]
+local function _get_active_unit_ids_with_missing_nemesis_records()
     local list = {}
     for _, unit in ipairs(units.active) do
         local ref = dfhack.units.getGeneralRef(unit, df.general_ref_type.IS_NEMESIS)
         if ref then
             local nrec = ref:getNemesis()
             if nrec == nil then
-                table.insert(list, unit)
+                table.insert(list, unit.id)
             end
         end
     end
     return list
 end
 
----@param vector any[]         # a df vector or array, or a Lua list (not tested yet).
+---@generic T
+---@param vector `T`[]         # a df vector or array, or a Lua list (not tested yet).
 ---@param field string?        # nil, or the field name to sort on.
----@param comparator fun(a:any, b:any):integer|nil
+---@param comparator fun(a:T, b:T):integer|nil
 ---     # an optional comparator that returns -1,0,1 per utils.compare_* .
 ---     # nil falls back to utils.compare or utils.compare_field.
 ---     # if a comparator is given, the field parameter is ignored.
@@ -381,34 +382,31 @@ end
 local Cache_nemesis_all = defclass(Cache_nemesis_all, nil)  -- singleton, don't need to instantiate.
 Cache_nemesis_all.ATTRS{}
 
+function Cache_nemesis_all:invalidate()
+    self.ATTRS.cached_on_year = -1
+end
+
 ---@param force boolean?  # true to force updating the cached data
 function Cache_nemesis_all:populate(force)
-    if  not force
-        and self.ATTRS.cached_on_year == dfhack.world.ReadCurrentYear()
-        and (self.ATTRS.cached_on_tick or 0) + 600 < dfhack.world.ReadCurrentTick()
+    local recheck_after = (self.ATTRS.cached_on_tick or 0) + 1200
+    if  force ~= true
+        and dfhack.world.ReadCurrentYear() == self.ATTRS.cached_on_year
+        and dfhack.world.ReadCurrentTick() < recheck_after
         and self.ATTRS.nemesis_all_length  == #df.global.world.nemesis.all
         and self.ATTRS.units_active_length == #df.global.world.units.active
     then
         return
     end
-print("Cache_nemesis_all:populate", "\n",
-"force", force, "\n",
-"year", self.ATTRS.cached_on_year, dfhack.world.ReadCurrentYear(), "\n",
-"tick", self.ATTRS.cached_on_tick, dfhack.world.ReadCurrentTick(), "\n",
-"#nemall", self.ATTRS.nemesis_all_length, #df.global.world.nemesis.all, "\n",
-"#active", self.ATTRS.units_active_length, #df.global.world.units.active, "\n",
-"")
-
     self.ATTRS.cached_on_year = dfhack.world.ReadCurrentYear()
     self.ATTRS.cached_on_tick = dfhack.world.ReadCurrentTick()
     self.ATTRS.nemesis_all_length = #df.global.world.nemesis.all
     self.ATTRS.units_active_length = #df.global.world.units.active
     self.ATTRS.nemesis_all_is_sorted = verify_vector_is_sorted(df.global.world.nemesis.all, 'id')
-    self.ATTRS.affected_units = _get_active_units_with_missing_nemesis_records()
+    self.ATTRS.affected_unit_ids = _get_active_unit_ids_with_missing_nemesis_records()
 end
 
 function Cache_nemesis_all:init()
-    self:populate(true)
+    self:invalidate()
 end
 
 ---@return boolean
@@ -418,9 +416,9 @@ function Cache_nemesis_all:is_sorted()
 end
 
 ---@return df.unit[]
-function Cache_nemesis_all:get_affected_units()
+function Cache_nemesis_all:get_affected_unit_ids()
     self:populate()
-    return self.ATTRS.affected_units
+    return self.ATTRS.affected_unit_ids
 end
 
 -- the order of this list controls the order the notifications will appear in the overlay
@@ -439,7 +437,7 @@ NOTIFICATIONS_BY_IDX = {
             local count = df.global.nemesis_next_id - #df.global.world.nemesis.all
             if count == 0 then return end
             return { {
-                pen = #Cache_nemesis_all:get_affected_units() > 0
+                pen = #Cache_nemesis_all:get_affected_unit_ids() > 0
                     and COLOR_LIGHTRED or COLOR_YELLOW,
                 text = ('missing %d nemesis record%s'):format(count, count == 1 and '' or 's')
             } }
@@ -454,7 +452,7 @@ NOTIFICATIONS_BY_IDX = {
                 dlg.showMessage('nemesis vector not sorted', message, COLOR_RED)
                 return
             end
-            local list = Cache_nemesis_all:get_affected_units()
+            local list = Cache_nemesis_all:get_affected_unit_ids()
             local message = {
                 { pen = COLOR_RED,   text = 'This save game may be corrupt.' }, NEWLINE,
                 NEWLINE,
@@ -475,8 +473,10 @@ NOTIFICATIONS_BY_IDX = {
                 table.insert(message, { pen = COLOR_RED,
                     text = 'These units on the map are missing their nemesis records:' })
                 table.insert(message, NEWLINE)
-                for _, unit in ipairs(list) do
-                    local text = dfhack.units.getReadableName(unit)
+                for _, unit_id in ipairs(list) do
+                    local unit = df.unit.find(unit_id)
+                    local text = unit and dfhack.units.getReadableName(unit)
+                        or "missing unit for unit id " .. unit_id
                     if #text > 55 then text = dfhack.units.getReadableName(unit, true); end
                     table.insert(message, { pen = COLOR_LIGHTRED, text = text })
                     table.insert(message, NEWLINE)
@@ -768,7 +768,9 @@ end
 config = get_config()
 
 dfhack.onStateChange['internal/notify/notifications'] = function(event)
-    if event == SC_WORLD_LOADED or SC_WORLD_UNLOADED or SC_MAP_LOADED or SC_MAP_UNLOADED then
-        Cache_nemesis_all:populate(true)
+    if event == SC_WORLD_LOADED or event == SC_WORLD_UNLOADED
+        or event == SC_MAP_LOADED or event == SC_MAP_UNLOADED
+    then
+        Cache_nemesis_all:invalidate()
     end
 end
